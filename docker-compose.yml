@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis
+    container_name: redis-db
+    restart: always
+    ports:
+      -"6379:6379"
+    volumes:
+      - redis_data:/data/db
+  
+  fastapi:
+    build:  .
+    container_name: fastapi-backend
+    restart: always
+    ports:
+      -"8000:8000"
+    volumes:
+      -.:/app
