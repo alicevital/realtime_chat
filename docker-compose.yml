@@ -1,20 +1,27 @@
-version: '3.8'
 
 services:
   redis:
     image: redis
-    container_name: redis-db
+    container_name: redis
     restart: always
     ports:
-      -"6379:6379"
+      - "6379:6379"
     volumes:
-      - redis_data:/data/db
+      - redis_data:/data
   
   fastapi:
     build:  .
     container_name: fastapi-backend
     restart: always
     ports:
-      -"8000:8000"
+      - "8000:8000"
     volumes:
-      -.:/app
+      - .:/app
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+volumes:
+  redis_data:
