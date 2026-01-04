@@ -1,7 +1,12 @@
+import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from services.websocket_manager import WebSocketManager, manager
+from services.websocket_manager import manager
 
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup():
+    asyncio.create_task(manager.start_redis())
 
 
 @app.websocket("/ws/global")
@@ -10,11 +15,10 @@ async def websocket_endepoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            await manager.send(f"Message: {data}", websocket)
-            await manager.broadcast(f"Client {client_id} says: {data}")
+            await manager.publish(f"Client {client_id}: {data}")
 
     except WebSocketDisconnect:
         manager.disconnect(client_id)
-        await manager.broadcast(f"Client {client_id} has left the chat")
+        await manager.publish(f"Client {client_id} saiu do chat")
 
 
