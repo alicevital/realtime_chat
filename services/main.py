@@ -1,3 +1,19 @@
-'''
-Docstring for services.main
-'''
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from services.websocket_manager import WebSocketManager, manager
+
+app = FastAPI()
+
+@app.websocket("/ws/{client_id}")
+async def websocket_endepoint(websocket: WebSocket, client_id: int):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.send(f"Message: {data}", websocket)
+            await manager.broadcast(f"Client {client_id} says: {data}")
+
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+        await manager.broadcast(f"Client {client_id} has left the chat")
+
+
