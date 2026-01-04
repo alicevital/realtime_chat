@@ -1,26 +1,29 @@
 import asyncio
-import json
+import uuid
 from typing import List
 from fastapi import WebSocket
 
 class WebSocketManager:
     def __init__(self):
-        self.active_connections: list[WebSocket] = []
+        self.active_connections: dict[str, WebSocket] = {}
     
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> str:
         await websocket.accept()
-        self.active_connections.append(websocket)
-        print("conexão bem sucedida!")
+        client_id = str(uuid.uuid4())
+        self.active_connections[client_id] = websocket
+        print(f"conexão bem sucedida!{client_id}")
+
+        return client_id
     
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-        print("client desconectado")
+    def disconnect(self, client_id: str):
+        self.active_connections.remove(client_id, None)
+        print(f"client {client_id} desconectado")
 
     async def send(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
     
     async def broadcast(self, message: str): 
-        for actives in self.active_connections:
+        for actives in self.active_connections.values():
             await actives.send_text(message)
 
 manager = WebSocketManager()

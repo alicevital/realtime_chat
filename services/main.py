@@ -3,9 +3,10 @@ from services.websocket_manager import WebSocketManager, manager
 
 app = FastAPI()
 
-@app.websocket("/ws/{client_id}")
-async def websocket_endepoint(websocket: WebSocket, client_id: int):
-    await manager.connect(websocket)
+
+@app.websocket("/ws/global")
+async def websocket_endepoint(websocket: WebSocket):
+    client_id = await manager.connect(websocket)
     try:
         while True:
             data = await websocket.receive_text()
@@ -13,7 +14,7 @@ async def websocket_endepoint(websocket: WebSocket, client_id: int):
             await manager.broadcast(f"Client {client_id} says: {data}")
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        manager.disconnect(client_id)
         await manager.broadcast(f"Client {client_id} has left the chat")
 
 
