@@ -53,8 +53,8 @@ class WebSocketManager:
 
 
     async def publish(self, message: str, channel: str):
-        await self.save_message(channel, message)
+        await self.save_message(message, channel)
         await self.broadcast(message, channel)
-        await redis_client.publish(channel, message)
+        await redis_client.publish(message, channel)
 
 manager = WebSocketManager()
