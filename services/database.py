@@ -12,7 +12,7 @@ redis_client = redis.Redis(
     host=REDIS_HOST,
     port=REDIS_PORT,
     db=REDIS_DB,
-    decode_response=True
+    decode_responses=True
 )
 
 async def test_connect():
