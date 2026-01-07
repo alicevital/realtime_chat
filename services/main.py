@@ -20,7 +20,7 @@ def create_user(user: UserRequest):
         is_admin = True
 
     user_id = str(uuid4())
-    date_created = datetime.utcnow()   
+    date_created = datetime.utcnow()
 
     redis_client.hset(user_key, mapping={
             "username": user.username,
@@ -39,10 +39,14 @@ def create_user(user: UserRequest):
         date_created=date_created
     )
 
-@app.get("/user/list")
-def get_user(user: UserResponse):
-    # HGETALL usuario:1
-    pass
+
+@app.get("/user/list", response_model=UserResponse)
+def get_user(user: str):
+    user_key = f"user:{user.username}"
+
+    user_data = redis_client.hgetall(user_key)
+
+    return UserResponse(username=user_data.get("username"))
 
 @app.post("/user/login")
 def login(self, user: UserLogin):
