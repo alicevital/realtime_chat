@@ -1,64 +1,15 @@
 import asyncio
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
-from services.schemas.room_schema import RoomRequest, RoomResponse
-from services.schemas.user_schema import UserLogin, UserRequest, UserResponse
+from fastapi import FastAPI,WebSocket, WebSocketDisconnect
+from services.routes.room_route import router as room_router
+from services.routes.user_route import router as user_router
 from services.websocket_manager import manager
-from services.database import redis_client
 import logging
-from uuid import uuid4
-from datetime import datetime
 
 
-app = FastAPI()
+app = FastAPI(tittle="Realtime Chat")
 
-@app.post("/user/register",response_model=UserResponse)
-def create_user(user: UserRequest):
-    user_key = f"user:{user.username}"
-
-    is_admin = False
-    if "admin@secret" in user.username:
-        is_admin = True
-
-    user_id = str(uuid4())
-    date_created = datetime.utcnow()
-
-    redis_client.hset(user_key, mapping={
-            "username": user.username,
-            "name": user.name,
-            "password": user.password,
-            "is_admin": str(is_admin),
-            "date_created": date_created.isoformat()
-        }
-    )
-    
-    return UserResponse(
-        id=user_id,
-        name=user.name,
-        username=user.username,
-        is_admin=is_admin,
-        date_created=date_created
-    )
-
-
-@app.get("/user/list", response_model=UserResponse)
-def get_user(user: str):
-    user_key = f"user:{user.username}"
-
-    user_data = redis_client.hgetall(user_key)
-
-    return UserResponse(username=user_data.get("username"))
-
-@app.post("/user/login")
-def login(self, user: UserLogin):
-    pass
-
-@app.post("/room/create")
-def create_room(self, room: RoomRequest):
-    pass
-
-@app.get("/get/rooms")
-def get_room(self, room: RoomResponse):
-    pass
+app.include_router(user_router)
+app.include_router(room_router)
 
 @app.on_event("startup")
 async def startup():
@@ -72,7 +23,7 @@ async def startup():
 # só pode criar a sala se o user for admin = True e logged = True
 
 @app.websocket("/ws/global")
-async def chat_global(websocket: WebSocket, UserDTO):
+async def chat_global(websocket: WebSocket, UserLogin):
     # aguardar o username para adicioanr uma melhor UX
     # verificar se username existe no redis
     # remover a criação do channel por força bruta
