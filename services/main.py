@@ -1,15 +1,15 @@
 import asyncio
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from services.schemas.user_schema import UserRequest
+from fastapi import FastAPI,WebSocket, WebSocketDisconnect
+from services.routes.room_route import router as room_router
+from services.routes.user_route import router as user_router
 from services.websocket_manager import manager
 import logging
 
 
-app = FastAPI()
+app = FastAPI(tittle="Realtime Chat")
 
-@app.post("/")
-def create_user(user: UserRequest):
-    pass
+app.include_router(user_router)
+app.include_router(room_router)
 
 @app.on_event("startup")
 async def startup():
@@ -23,7 +23,7 @@ async def startup():
 # só pode criar a sala se o user for admin = True e logged = True
 
 @app.websocket("/ws/global")
-async def chat_global(websocket: WebSocket, UserDTO):
+async def chat_global(websocket: WebSocket, UserLogin):
     # aguardar o username para adicioanr uma melhor UX
     # verificar se username existe no redis
     # remover a criação do channel por força bruta
@@ -43,23 +43,10 @@ async def chat_global(websocket: WebSocket, UserDTO):
     except Exception as e:
         logging.error(e)
 
-# @app.websocket("/ws/group")
-# async def chat_group(websocket: WebSocket):
-#     group_id = websocket.query_params.get("group_id")
-#     channel = f"chat:group:{group_id}"
-#     client_id = await manager.connect(websocket, channel)
-
-#     try:
-#         while True:
-#             data = await websocket.receive_text()
-#             await manager.publish(f"Client {client_id}: {data}", channel)
-
-#     except WebSocketDisconnect:
-#         manager.disconnect(client_id, channel)
-
 
 @app.websocket("/ws/group/{room_name}")
-async def chat_private(websocket: WebSocket, PrivateChatDTO):
+# async def chat_private(websocket: WebSocket, PrivateChatDTO):
+async def chat_room(websocket: WebSocket, channel, room_name):
     channel = f"chat:group:{room_name}"
     client_id = await manager.connect(websocket, channel)
     # adicionar o username e room_name no DTO

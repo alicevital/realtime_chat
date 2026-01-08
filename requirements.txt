@@ -2,3 +2,5 @@ fastapi[standard]
 redis
 uvicorn
 asyncio
+passlib
+bcrypt
