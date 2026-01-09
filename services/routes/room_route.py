@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from services.schemas.room_schema import RoomRequest, RoomResponse
-from services.database import redis_client
+from services.utils.database import redis_client
 
 
 router = APIRouter()
