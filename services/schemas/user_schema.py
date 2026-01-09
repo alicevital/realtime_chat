@@ -1,14 +1,13 @@
 '''
 Docstring for services.schemas(Schemas para futura integração com banco MongoDB)
 '''
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class UserRequest(BaseModel):
     username: str
     name: str
     password: str
-    is_admin: bool
 
 class UserLogin(BaseModel):
-    name: str
+    username: str
     password: str
