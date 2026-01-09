@@ -3,7 +3,7 @@ import logging
 import uuid
 from fastapi import WebSocket
 # import redis.asyncio as redis
-from services.database import redis_client
+from services.utils.database import redis_client
 
 class WebSocketManager:
     def __init__(self):
