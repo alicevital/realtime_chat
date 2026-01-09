@@ -1,13 +1,20 @@
 from fastapi import APIRouter, HTTPException
-from services.schemas.room_schema import RoomRequest, RoomResponse
+from services.schemas.room_schema import RoomResponse
 from services.utils.database import redis_client
-
 
 router = APIRouter()
 
 @router.post("/room/create")
 async def create_room(room_name: str, username: str):
-
+    '''
+        Função decriar salas de chat;
+        Apenas usuários logados e admins podem criar salas;
+        Verifica se user existe;
+        user_data recebe dados do usuário do banco redis;
+        verifica se usuário é admin, verifica se também está logado;
+        Verifica se sala já existe pelo nome;
+        Cria sala.
+    '''
     user_key = f"user:{username}"
 
     if not await redis_client.exists(user_key):
@@ -30,4 +37,7 @@ async def create_room(room_name: str, username: str):
 
 @router.get("/get/rooms")
 def get_room(room: RoomResponse):
+    '''
+        Criação da função de mostrar rooms ainda está em andamento.
+    '''
     pass
