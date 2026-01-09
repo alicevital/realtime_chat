@@ -1,7 +1,7 @@
 from services.schemas.user_schema import UserLogin, UserRequest
-from services.database import redis_client
+from services.utils.database import redis_client
 from fastapi import APIRouter, HTTPException
-from services.password import hash_password
+from services.utils.password import hash_password
 
 
 router = APIRouter()
@@ -9,10 +9,11 @@ router = APIRouter()
 @router.post("/user/register")
 async def create_user(user: UserRequest):
     '''
-        Função da rota de criar user, recebe o dto como parametro, 
-        cria uma chave que armazena o username da classse UserRequest,
-        verifica se o user é admin, 
-        insere o usuário e seus dados no redis
+        Função da rota de criar user, recebe o schema como parametro; 
+        cria uma chave que armazena o username da classse UserRequest;
+        verifica se usuário já existe;
+        verifica se o user é admin;
+        insere o usuário e seus dados no redis.
     '''
     user_key = f"user:{user.username}"
 
@@ -36,7 +37,13 @@ async def create_user(user: UserRequest):
 
 @router.get("/user/consult")
 async def get_user_by_name(username: str):
-    
+    '''
+        Função que busca usuário por nome;
+        chave recebe username como parametro;
+        Verifica se usuário existe com function exists do redis;
+        user_data recebe os dados do user a partir do comando hgetall do redis;
+        retorna dados do usuário.
+    '''
     user_key = f"user:{username}"
 
     if not await redis_client.exists(user_key):
@@ -52,6 +59,14 @@ async def get_user_by_name(username: str):
 
 @router.post("/user/login")
 async def login(user: UserLogin):
+    '''
+        Função de login de usuário;
+        Verifica se user existe no redis;
+        user_data recebe dados do user buscado no redis;
+        Verifica se password é correspondente ao usuário;
+        Adiciona usuário a coleção de usuários logados;
+        retorna mensagem de usuário logado.
+    '''
 
     user_key = f"user:{user.username}"
     
