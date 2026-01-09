@@ -1,12 +1,13 @@
 from services.schemas.user_schema import UserLogin, UserRequest
 from services.database import redis_client
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from services.password import hash_password
 
 
 router = APIRouter()
 
 @router.post("/user/register")
-def create_user(user: UserRequest):
+async def create_user(user: UserRequest):
     '''
         Função da rota de criar user, recebe o dto como parametro, 
         cria uma chave que armazena o username da classse UserRequest,
@@ -15,43 +16,59 @@ def create_user(user: UserRequest):
     '''
     user_key = f"user:{user.username}"
 
-    if not redis_client.exists.user:
-        raise Exception("Esse nome de username já existe!")
+    if await redis_client.exists(user_key):
+        raise HTTPException(status_code=400, detail="Esse nome de username já existe!")
 
-    if "admin@secret" not in user.username:
-        is_admin = False
+    is_admin = "true" if "admin@secret" in user.username else "false"
 
-    if "admin@secret" in user.username:
-        is_admin = True
-
-    verify_admin = is_admin
-
-    redis_client.hset(user_key, mapping={
+    await redis_client.hset(user_key, mapping={
             "username": user.username,
             "name": user.name,
             "password": user.password,
-            "is_admin": verify_admin
+            "is_admin": is_admin
         }
     )
 
-    return user
+    return {"message": "Usupario criado com sucesso",
+            "name": user.name,
+            "is_admin": is_admin}
 
-@router.get("/user/list")
-async def get_user_by_name(name: str):
-    # user_key = f"user:{name}" <- testar sem usar key
 
-    if not redis_client.exists(f"user:{name}"):
-        raise Exception("Não existe esse usuário")
-    else:
-        return name
+@router.get("/user/consult")
+async def get_user_by_name(username: str):
+    
+    user_key = f"user:{username}"
+
+    if not await redis_client.exists(user_key):
+        raise HTTPException(status_code=404, detail="Não existe esse usuário")
+
+    user_data = await redis_client.hgetall(user_key)
+
+    return {
+        "name": user_data.get("name"),
+        "is_admin": user_data.get("is_admin")
+    }
 
 
 @router.post("/user/login")
-def login(user: UserLogin):
+async def login(user: UserLogin):
 
-    users_loggeds = user
+    user_key = f"user:{user.username}"
     
-    if redis_client.exists(f"user:{user.name}"):
-        return users_loggeds
-    else:
-        return {"message": "Usuário não existe, faça o cadastro"}
+    if not await redis_client.exists(user_key):
+        raise HTTPException(status_code=404, detail="Usuário não existe, crie.")
+    
+    user_data = await redis_client.hgetall(user_key)
+
+    if user.password != user_data["password"]:
+        raise HTTPException(
+            status_code=401, detail="Senha incorreta"
+        )
+    
+    await redis_client.sadd("logged_users", user.username)
+
+    return {
+        "message": "Login realizado com sucesso!",
+        "name": user_data["name"],
+        "is_admin": user_data["is_admin"]
+    }
