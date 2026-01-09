@@ -7,7 +7,8 @@ router = APIRouter()
 
 @router.post("/room/create")
 def create_room(room: RoomRequest):
-    
+    # is_admin = user_data["is_admin"].lower() == "true"
+
     return room
 
 @router.get("/get/rooms")
